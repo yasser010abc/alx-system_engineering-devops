@@ -1,24 +1,30 @@
 #!/usr/bin/python3
+'''
+gather employee data from API
+'''
+
+import re
 import requests
-from sys import argv
+import sys
 
+REST_API = "https://jsonplaceholder.typicode.com"
 
-if __name__ == "__main__":
-    rUser = requests.get("https://jsonplaceholder.typicode.com/users/{}"
-                         .format(argv[1]))
-    emplName = rUser.json().get('name')
-    rTodo = requests.get("https://jsonplaceholder.typicode.com/todos/").json()
-    noTask = 0
-    noDone = 0
-    compTasks = []
-    for d in rTodo:
-        if d.get('userId') == int(argv[1]) and d.get('completed') is True:
-            noTask += 1
-            noDone += 1
-            compTasks.append(d.get('title'))
-        elif d.get('userId') == int(argv[1]):
-            noTask += 1
-    print('Employee {} is done with tasks({}/{}):'
-          .format(emplName, noDone, noTask))
-    for task in compTasks:
-        print("\t {}".format(task))
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        if re.fullmatch(r'\d+', sys.argv[1]):
+            id = int(sys.argv[1])
+            req = requests.get('{}/users/{}'.format(REST_API, id)).json()
+            task_req = requests.get('{}/todos'.format(REST_API)).json()
+            emp_name = req.get('name')
+            tasks = list(filter(lambda x: x.get('userId') == id, task_req))
+            completed_tasks = list(filter(lambda x: x.get('completed'), tasks))
+            print(
+                'Employee {} is done with tasks({}/{}):'.format(
+                    emp_name,
+                    len(completed_tasks),
+                    len(tasks)
+                )
+            )
+            if len(completed_tasks) > 0:
+                for task in completed_tasks:
+                    print('\t {}'.format(task.get('title')))
